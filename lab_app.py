@@ -4,7 +4,9 @@ import shutil
 from datetime import datetime, date, timedelta
 from typing import Optional
 from fastapi import FastAPI, Request, Form, Depends, File, UploadFile, HTTPException, Header
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, FileResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.responses import FileResponse
+import os
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, ForeignKey, func, or_, Text
@@ -51,11 +53,11 @@ def manifest():
         ]
     }
 
-# --- الكود الجديد الذي يجب إضافته هنا ---
 @app.get('/sw.js')
-def service_worker():
-    # هذا السطر يفترض أن ملف sw.js موجود في المجلد الرئيسي للمشروع
-    return FileResponse('sw.js', media_type='application/javascript')
+async def service_worker():
+    # هذا السطر يحدد المسار الفعلي للملف داخل سيرفر Render
+    file_path = os.path.join(os.path.dirname(__file__), 'sw.js')
+    return FileResponse(file_path, media_type='application/javascript')
 
 app.mount("/results_files", StaticFiles(directory=UPLOAD_DIR), name="results_files")
 templates = Jinja2Templates(directory="templates")
