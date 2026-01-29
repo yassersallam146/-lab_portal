@@ -1,0 +1,559 @@
+# 🚀 Production Deployment Guide
+
+Complete guide for deploying your laboratory management system to production.
+
+## 📋 Pre-Deployment Checklist
+
+### Security
+- [ ] Change SECRET_KEY to a strong random value
+- [ ] Change default admin password
+- [ ] Change default staff password
+- [ ] Review and set file upload limits
+- [ ] Enable HTTPS/SSL
+- [ ] Set up firewall rules
+- [ ] Disable debug mode
+
+### Database
+- [ ] Migrate from SQLite to PostgreSQL
+- [ ] Set up database backups
+- [ ] Test database connection
+- [ ] Set up connection pooling
+
+### Configuration
+- [ ] Update publish link to real domain
+- [ ] Set correct lab name
+- [ ] Configure email settings (if adding email)
+- [ ] Set up environment variables
+
+### Testing
+- [ ] Test all features end-to-end
+- [ ] Test from different devices
+- [ ] Test file uploads
+- [ ] Test patient portal
+- [ ] Load test with sample data
+
+## 🔧 Method 1: Deploy on Linux Server (Recommended)
+
+### Prerequisites
+- Ubuntu 20.04+ or similar Linux server
+- Root or sudo access
+- Domain name pointed to your server
+
+### Step 1: Server Setup
+
+```bash
+# Update system
+sudo apt update
+sudo apt upgrade -y
+
+# Install Python 3.9+
+sudo apt install python3.9 python3.9-venv python3-pip -y
+
+# Install PostgreSQL
+sudo apt install postgresql postgresql-contrib -y
+
+# Install Nginx
+sudo apt install nginx -y
+
+# Install Supervisor (for process management)
+sudo apt install supervisor -y
+```
+
+### Step 2: Database Setup
+
+```bash
+# Create database and user
+sudo -u postgres psql
+
+# In PostgreSQL shell:
+CREATE DATABASE labdb;
+CREATE USER labuser WITH PASSWORD 'your_secure_password_here';
+GRANT ALL PRIVILEGES ON DATABASE labdb TO labuser;
+\q
+```
+
+### Step 3: Application Setup
+
+```bash
+# Create application directory
+sudo mkdir -p /var/www/lab-system
+cd /var/www/lab-system
+
+# Upload your files (use SCP, SFTP, or git)
+# scp -r /path/to/local/lab-system/* user@server:/var/www/lab-system/
+
+# Create virtual environment
+python3.9 -m venv venv
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Install production server
+pip install gunicorn
+```
+
+### Step 4: Environment Configuration
+
+Create `.env` file:
+
+```bash
+nano .env
+```
+
+Add:
+```env
+SECRET_KEY=your-super-secret-key-minimum-32-characters-long
+DATABASE_URL=postgresql://labuser:your_secure_password_here@localhost/labdb
+APP_DEBUG=False
+PUBLISH_LINK=https://results.yourlab.com
+```
+
+Update `main.py` to use environment variables:
+
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+SECRET_KEY = os.getenv("SECRET_KEY", "fallback-key")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///lab.db")
+```
+
+Don't forget to install python-dotenv:
+```bash
+pip install python-dotenv
+```
+
+### Step 5: Gunicorn Configuration
+
+Create `/var/www/lab-system/gunicorn_config.py`:
+
+```python
+bind = "127.0.0.1:8000"
+workers = 4
+worker_class = "uvicorn.workers.UvicornWorker"
+accesslog = "/var/log/lab-system/access.log"
+errorlog = "/var/log/lab-system/error.log"
+loglevel = "info"
+```
+
+Create log directory:
+```bash
+sudo mkdir -p /var/log/lab-system
+sudo chown -R www-data:www-data /var/log/lab-system
+```
+
+### Step 6: Supervisor Configuration
+
+Create `/etc/supervisor/conf.d/lab-system.conf`:
+
+```ini
+[program:lab-system]
+directory=/var/www/lab-system
+command=/var/www/lab-system/venv/bin/gunicorn main:app -c gunicorn_config.py
+user=www-data
+autostart=true
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/var/log/lab-system/supervisor.log
+```
+
+Start the service:
+```bash
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl start lab-system
+```
+
+### Step 7: Nginx Configuration
+
+Create `/etc/nginx/sites-available/lab-system`:
+
+```nginx
+server {
+    listen 80;
+    server_name yourlab.com www.yourlab.com;
+
+    client_max_body_size 20M;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /static {
+        alias /var/www/lab-system/static;
+    }
+
+    location /results_files {
+        alias /var/www/lab-system/results_files;
+    }
+}
+```
+
+Enable the site:
+```bash
+sudo ln -s /etc/nginx/sites-available/lab-system /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+### Step 8: SSL Certificate (Let's Encrypt)
+
+```bash
+# Install Certbot
+sudo apt install certbot python3-certbot-nginx -y
+
+# Get certificate
+sudo certbot --nginx -d yourlab.com -d www.yourlab.com
+
+# Auto-renewal is set up automatically
+# Test renewal:
+sudo certbot renew --dry-run
+```
+
+### Step 9: Set Permissions
+
+```bash
+sudo chown -R www-data:www-data /var/www/lab-system
+sudo chmod -R 755 /var/www/lab-system
+sudo chmod -R 775 /var/www/lab-system/results_files
+```
+
+### Step 10: Database Migration
+
+```bash
+# Activate virtual environment
+source /var/www/lab-system/venv/bin/activate
+
+# Update DATABASE_URL in main.py to PostgreSQL
+# Then run the application once to create tables
+cd /var/www/lab-system
+python main.py
+# Press Ctrl+C after tables are created
+
+# Restart via supervisor
+sudo supervisorctl restart lab-system
+```
+
+## 🔧 Method 2: Deploy with Docker
+
+### Dockerfile
+
+Create `Dockerfile`:
+
+```dockerfile
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p static templates results_files
+
+# Expose port
+EXPOSE 8000
+
+# Run application
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+### Docker Compose
+
+Create `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+
+services:
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: labdb
+      POSTGRES_USER: labuser
+      POSTGRES_PASSWORD: your_secure_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - lab-network
+
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://labuser:your_secure_password@db/labdb
+      SECRET_KEY: your-super-secret-key
+    volumes:
+      - ./results_files:/app/results_files
+    depends_on:
+      - db
+    networks:
+      - lab-network
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./results_files:/var/www/results_files
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    depends_on:
+      - web
+    networks:
+      - lab-network
+
+volumes:
+  postgres_data:
+
+networks:
+  lab-network:
+    driver: bridge
+```
+
+Deploy:
+```bash
+docker-compose up -d
+```
+
+## 📊 Monitoring & Maintenance
+
+### System Monitoring
+
+Install monitoring tools:
+```bash
+sudo apt install htop iotop nethogs -y
+```
+
+Monitor application:
+```bash
+# Check supervisor status
+sudo supervisorctl status
+
+# Check nginx status
+sudo systemctl status nginx
+
+# Check logs
+tail -f /var/log/lab-system/error.log
+tail -f /var/log/nginx/error.log
+```
+
+### Database Backups
+
+Create backup script `/usr/local/bin/backup-lab-db.sh`:
+
+```bash
+#!/bin/bash
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_DIR="/backups/lab-system"
+mkdir -p $BACKUP_DIR
+
+# Database backup
+pg_dump -U labuser labdb > $BACKUP_DIR/labdb_$DATE.sql
+
+# Files backup
+tar -czf $BACKUP_DIR/results_$DATE.tar.gz /var/www/lab-system/results_files
+
+# Keep only last 30 days
+find $BACKUP_DIR -mtime +30 -delete
+```
+
+Make executable:
+```bash
+sudo chmod +x /usr/local/bin/backup-lab-db.sh
+```
+
+Add to crontab (daily at 2 AM):
+```bash
+sudo crontab -e
+# Add:
+0 2 * * * /usr/local/bin/backup-lab-db.sh
+```
+
+### Application Updates
+
+```bash
+# Stop application
+sudo supervisorctl stop lab-system
+
+# Pull updates (if using git)
+cd /var/www/lab-system
+git pull
+
+# Or upload new files via SCP
+
+# Update dependencies if needed
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Restart application
+sudo supervisorctl start lab-system
+```
+
+## 🔒 Security Hardening
+
+### Firewall Setup (UFW)
+
+```bash
+sudo ufw allow 22/tcp  # SSH
+sudo ufw allow 80/tcp  # HTTP
+sudo ufw allow 443/tcp # HTTPS
+sudo ufw enable
+```
+
+### Fail2Ban (Protection against brute force)
+
+```bash
+sudo apt install fail2ban -y
+
+# Create configuration
+sudo nano /etc/fail2ban/jail.local
+```
+
+Add:
+```ini
+[nginx-http-auth]
+enabled = true
+filter = nginx-http-auth
+port = http,https
+logpath = /var/log/nginx/error.log
+maxretry = 3
+bantime = 3600
+```
+
+```bash
+sudo systemctl restart fail2ban
+```
+
+### Regular Security Updates
+
+```bash
+# Set up automatic security updates
+sudo apt install unattended-upgrades -y
+sudo dpkg-reconfigure unattended-upgrades
+```
+
+## 📈 Performance Optimization
+
+### Nginx Caching
+
+Add to nginx config:
+```nginx
+# Cache static files
+location ~* \.(jpg|jpeg|png|gif|ico|css|js|pdf)$ {
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+}
+```
+
+### Database Optimization
+
+```sql
+-- Create indexes
+CREATE INDEX idx_patients_name ON patients(name);
+CREATE INDEX idx_patients_phone ON patients(phone);
+CREATE INDEX idx_orders_pin ON orders(pin);
+CREATE INDEX idx_orders_created_at ON orders(created_at);
+
+-- Analyze tables
+ANALYZE patients;
+ANALYZE orders;
+```
+
+### Gunicorn Workers
+
+Optimal number of workers:
+```
+workers = (2 x number_of_cores) + 1
+```
+
+For a 4-core server:
+```python
+workers = 9
+```
+
+## ✅ Post-Deployment Checklist
+
+- [ ] Application accessible via HTTPS
+- [ ] SSL certificate valid and auto-renewing
+- [ ] Database backups running daily
+- [ ] All default passwords changed
+- [ ] Monitoring set up
+- [ ] Firewall configured
+- [ ] Fail2Ban active
+- [ ] Logs rotating properly
+- [ ] Test all features from production URL
+- [ ] Patient portal working
+- [ ] File uploads working
+- [ ] Finance reports accessible
+- [ ] Mobile devices tested
+
+## 🆘 Troubleshooting
+
+### Application won't start
+```bash
+# Check supervisor logs
+sudo supervisorctl tail -f lab-system
+
+# Check application logs
+tail -f /var/log/lab-system/error.log
+```
+
+### Database connection errors
+```bash
+# Test database connection
+psql -U labuser -d labdb -h localhost
+
+# Check PostgreSQL status
+sudo systemctl status postgresql
+```
+
+### Nginx errors
+```bash
+# Test configuration
+sudo nginx -t
+
+# Check logs
+tail -f /var/log/nginx/error.log
+```
+
+### Permission errors
+```bash
+# Fix ownership
+sudo chown -R www-data:www-data /var/www/lab-system
+
+# Fix permissions
+sudo chmod -R 755 /var/www/lab-system
+sudo chmod -R 775 /var/www/lab-system/results_files
+```
+
+## 📞 Support Resources
+
+- FastAPI Documentation: https://fastapi.tiangolo.com
+- Nginx Documentation: https://nginx.org/en/docs/
+- PostgreSQL Documentation: https://www.postgresql.org/docs/
+- Let's Encrypt: https://letsencrypt.org/docs/
+
+---
+
+**Your system is now production-ready! 🎉**
+
+Remember to:
+- Monitor logs regularly
+- Keep backups up to date
+- Apply security updates
+- Test disaster recovery procedures

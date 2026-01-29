@@ -1,0 +1,5 @@
+uvicorn lab_app:app --reload
+
+
+
+taskkill /f /im python.exe

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ dir }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>{{ t.dashboard }}</title>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .stat-card {
+            border: none;
+            border-radius: 15px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+                /* ألوان جذابة متدرجة للأيقونات */
+    .bg-patients { background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%) !important; color: white !important; }
+    .bg-orders { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important; color: white !important; }
+    .bg-finance { background: linear-gradient(135deg, #ff9966 0%, #ff5e62 100%) !important; color: white !important; }
+    .bg-reports { background: linear-gradient(135deg, #4568dc 0%, #b06ab3 100%) !important; color: white !important; }
+    /* ألوان مخصصة للأيقونات فقط */
+    .icon-patient { color: #FFD700 !important; } /* ذهبي ساطع */
+    .icon-vial { color: #00FF7F !important; }    /* أخضر ربيعي مشرق */
+    .icon-today { color: #00BFFF !important; }   /* أزرق سماوي قوي */
+    .icon-pending { color: #FF4500 !important; } /* برتقالي محمر جذاب */
+
+    /* حركة لجعل الأيقونة تنبض قليلاً */
+    .stat-icon {
+        filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));
+    }
+    .icon-box { 
+        padding: 30px; 
+        border-radius: 20px; 
+        transition: all 0.3s ease; 
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .icon-box:hover { transform: scale(1.05); box-shadow: 0 15px 30px rgba(0,0,0,0.2); }
+    .dashboard-icon { font-size: 3rem; margin-bottom: 15px; } 
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        .stat-icon {
+            font-size: 3rem;
+            opacity: 0.8;
+        }
+        .navbar-custom {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .language-selector {
+            display: inline-block;
+            margin-right: 10px;
+        }
+        .profile-section {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .quick-btn {
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .quick-btn i {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark navbar-custom mb-4">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="fas fa-flask"></i> {{ t.dashboard }}
+            </span>
+            <div class="d-flex align-items-center text-white">
+                <span class="me-3">
+                    <i class="fas fa-user-circle"></i> {{ user.username }}
+                    <span class="badge bg-light text-dark ms-2">
+                        {{ t.admin if user.role == 'admin' else t.employee }}
+                    </span>
+                </span>
+                <a href="/logout" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-sign-out-alt"></i> {{ t.logout }}
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="text-center py-3">
+        <img src="/static/images/logo.png" style="height: 80px;" alt="Logo">
+        <h3 class="mt-2">{{ settings.lab_name }}</h3>
+    </div>
+
+    <div class="profile-section">
+        {% if user.role == 'admin' or settings.show_language_to_users %}
+        <form action="/update_language" method="post" class="language-selector">
+            <select name="lang" onchange="this.form.submit()" class="form-select form-select-sm">
+                <option value="ar" {% if lang == 'ar' %}selected{% endif %}>{{ t.arabic }}</option>
+                <option value="en" {% if lang == 'en' %}selected{% endif %}>{{ t.english }}</option>
+            </select>
+        </form>
+        {% endif %}
+        
+        <a href="/my_settings" class="btn btn-sm btn-dark">
+            <i class="fas fa-user-cog"></i> {{ t.profile }}
+        </a>
+    </div>
+
+    <div class="container">
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card stat-card bg-patients text-white icon-box">
+                    <div class="card-body text-center">
+                        <i class="fas fa-users stat-icon icon-patient"></i>
+                        <h3 class="mt-3 mb-0">{{ patient_count }}</h3>
+                        <p class="mb-3">{{ t.patients }}</p>
+                        <a href="/patients" class="btn btn-light btn-sm">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card stat-card bg-orders text-white icon-box">
+                    <div class="card-body text-center">
+                        <i class="fas fa-vials stat-icon icon-vial"></i>
+                        <h3 class="mt-3 mb-0">{{ order_count }}</h3>
+                        <p class="mb-3">{{ t.orders }}</p>
+                        <a href="/orders" class="btn btn-light btn-sm">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card stat-card bg-reports text-white icon-box">
+                    <div class="card-body text-center">
+                        <i class="fas fa-calendar-day stat-icon icon-today"></i>
+                        <h3 class="mt-3 mb-0">{{ today_orders }}</h3>
+                        <p class="mb-3">{{ t.today_orders }}</p>
+                        <a href="/orders" class="btn btn-light btn-sm">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card stat-card bg-finance text-white icon-box">
+                    <div class="card-body text-center">
+                        <i class="fas fa-hourglass-half stat-icon icon-pending"></i>
+                        <h3 class="mt-3 mb-0">{{ pending_results }}</h3>
+                        <p class="mb-3">{{ t.pending }}</p>
+                        <a href="/orders?status=pending" class="btn btn-light btn-sm">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-dark text-white">
+                        <i class="fas fa-bolt"></i> {{ t.quick_actions }}
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <a href="/add_order" class="btn btn-success w-100 quick-btn">
+                                    <i class="fas fa-plus-circle"></i>
+                                    {{ t.add_order }}
+                                </a>
+                            </div>
+                            <div class="col-md-4">
+                                <a href="/patients" class="btn btn-primary w-100 quick-btn">
+                                    <i class="fas fa-users"></i>
+                                    {{ t.patient_list }}
+                                </a>
+                            </div>
+                            <div class="col-md-4">
+                                <a href="/orders" class="btn btn-info w-100 quick-btn">
+                                    <i class="fas fa-list"></i>
+                                    {{ t.orders }}
+                                </a>
+                            </div>
+                            
+                            {% if user.role == 'admin' or settings.show_finance_to_users %}
+                            <div class="col-md-4">
+                                <a href="/finance" class="btn btn-secondary w-100 quick-btn bg-finance" style="border: none;">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                    {{ t.finance or 'المالية' }}
+                                </a>
+                            </div>
+                            {% endif %}
+
+                            {% if user.role == 'admin' %}
+                            <div class="col-md-4">
+                                <a href="/settings" class="btn btn-dark w-100 quick-btn">
+                                    <i class="fas fa-cog"></i>
+                                    {{ t.settings }}
+                                </a>
+                            </div>
+                            {% endif %}
+
+                            <div class="col-md-4">
+                                <a href="/online_results" class="btn btn-warning w-100 quick-btn" target="_blank">
+                                    <i class="fas fa-external-link-alt"></i>
+                                    {{ t.portal }}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if user.role == 'admin' %}
+            <div class="col-md-4">
+                <div class="card border-danger shadow-sm">
+                    <div class="card-header bg-danger text-white">
+                        <i class="fas fa-user-shield"></i> {{ t.staff_perms or 'إدارة الصلاحيات' }}
+                    </div>
+                    <div class="card-body">
+                        <form action="/update_settings" method="post">
+                            <input type="hidden" name="lab_name" value="{{ settings.lab_name }}">
+                            <input type="hidden" name="publish_link" value="{{ settings.publish_link }}">
+                            <input type="hidden" name="default_language" value="{{ settings.default_language }}">
+                            
+                            <div class="form-check form-switch mb-4 pb-3 border-bottom">
+                                <input class="form-check-input" type="checkbox" name="finance_access" id="financeSwitch" 
+                                       {% if settings.show_finance_to_users %}checked{% endif %}>
+                                <label class="form-check-label" for="financeSwitch">
+                                    <i class="fas fa-dollar-sign text-success"></i> {{ t.view_finance or 'إتاحة المالية للموظف' }}
+                                </label>
+                            </div>
+
+                            <div class="form-check form-switch mb-4">
+                                <input class="form-check-input" type="checkbox" name="show_language" id="langSwitch" 
+                                       {% if settings.show_language_to_users %}checked{% endif %}>
+                                <label class="form-check-label" for="langSwitch">
+                                    <i class="fas fa-language text-primary"></i> {{ t.show_language }}
+                                </label>
+                            </div>
+
+                            <button type="submit" class="btn btn-danger btn-sm w-100">
+                                <i class="fas fa-save"></i> {{ t.update_settings }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // إضافة CSRF token وإدارة النماذج
+        document.addEventListener('DOMContentLoaded', function() {
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جار الحفظ...';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

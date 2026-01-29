@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ dir }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>{{ t.settings }}</title>
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <h3 class="mb-0"><i class="fas fa-cog"></i> {{ t.settings }}</h3>
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm">
+                    <div class="card-header bg-dark text-white">
+                        <i class="fas fa-wrench"></i> {{ t.general_settings }}
+                    </div>
+                    <div class="card-body p-4">
+                        <form method="post" action="/update_settings">
+                            
+                            <div class="mb-4">
+                                <label class="form-label fw-bold"><i class="fas fa-hospital"></i> {{ t.lab_name }}</label>
+                                <input type="text" name="lab_name" class="form-control form-control-lg" value="{{ settings.lab_name }}" required>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label fw-bold"><i class="fas fa-link"></i> {{ t.publish_link }}</label>
+                                <input type="url" name="publish_link" class="form-control form-control-lg" value="{{ settings.publish_link }}" required>
+                            </div>
+
+                            <hr>
+
+                            <div class="mb-4 p-3 bg-light rounded border">
+                                <label class="form-label fw-bold text-primary"><i class="fas fa-user-shield"></i> {{ t.permissions_and_language }}</label>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" name="show_language" id="showLang" {% if settings.show_language_to_users %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold" for="showLang">{{ t.show_language }}</label>
+                                </div>
+                                <label class="form-label small">{{ t.default_language }}:</label>
+                                <select name="default_language" class="form-select border-primary">
+                                    <option value="ar" {% if settings.default_language == 'ar' %}selected{% endif %}>{{ t.arabic }}</option>
+                                    <option value="en" {% if settings.default_language == 'en' %}selected{% endif %}>{{ t.english }}</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-4 p-3 bg-white rounded border border-warning shadow-sm">
+                                <label class="form-label fw-bold text-warning mb-3">
+                                    <i class="fas fa-users-cog"></i> {{ t.staff_permissions or 'صلاحيات الموظفين' }}
+                                </label>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="finance_access" id="financeAccess" 
+       {% if settings.show_finance_to_users or settings.can_view_finance or settings.show_finance %}checked{% endif %}>
+                                        <label class="form-check-label ms-2 fw-bold" for="financeAccess">
+                                            {{ t.allow_finance_access or 'السماح للموظف برؤية التقارير المالية' }}
+                                        </label>
+                                    </div>
+                                    <button type="submit" class="btn btn-sm btn-warning fw-bold">
+                                        <i class="fas fa-sync-alt"></i> تحديث الصلاحية
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info py-2">
+                                <i class="fas fa-clock"></i> <strong>{{ t.last_update }}:</strong> {{ settings.updated_at.strftime('%Y-%m-%d %H:%M') }}
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" class="btn btn-primary btn-lg px-5">
+                                    <i class="fas fa-save"></i> {{ t.save_changes }}
+                                </button>
+                                <a href="/" class="btn btn-outline-dark">
+                                    <i class="fas fa-arrow-right"></i> العودة للوحة التحكم
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: lab-management-system
+    runtime: python
+    pythonVersion: 3.11
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /
+    envVars:
+      - key: SECRET_KEY
+        value: your-secret-key-change-this-in-production
+      - key: PYTHON_VERSION
+        value: 3.11.7
