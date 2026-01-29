@@ -34,6 +34,23 @@ for folder in ["static", "templates", UPLOAD_DIR, LOGO_DIR]:
         os.makedirs(folder)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get('/manifest.json')
+def manifest():
+    return {
+        "name": "Lab Management System",
+        "short_name": "Lab Portal",
+        "description": "Laboratory Management System",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#ffffff",
+        "theme_color": "#3498db",
+        "icons": [
+            {"src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png"},
+            {"src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png"}
+        ]
+    }
+
 app.mount("/results_files", StaticFiles(directory=UPLOAD_DIR), name="results_files")
 templates = Jinja2Templates(directory="templates")
 
