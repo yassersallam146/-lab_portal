@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Publish Link</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<h2>تعديل رابط نشر النتائج / Edit Publish Link</h2>
+<form method="post" action="/publish_link">
+    Link: <input type="text" name="link" value="{{ link }}"><br>
+    <button type="submit">Save</button>
+</form>
+<a href="/orders">Orders</a> | <a href="/">Dashboard</a>
+</body>
+</html>

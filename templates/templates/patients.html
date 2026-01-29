@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ dir }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>{{ t.patients }}</title>
+</head>
+<body class="bg-light">
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3><i class="fas fa-users text-primary"></i> {{ t.patient_record }}</h3>
+            <div>
+                <a href="/add_patient" class="btn btn-success me-2">
+                    <i class="fas fa-user-plus"></i> {{ t.add_patient }}
+                </a>
+                <a href="/my_settings" class="btn btn-outline-dark me-2">
+                    <i class="fas fa-user-shield"></i> {{ t.profile }}
+                </a>
+                <a href="/" class="btn btn-outline-primary">
+                    <i class="fas fa-home"></i> {{ t.home }}
+                </a>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="get" action="/patients" class="row g-3">
+                    <div class="col-md-10">
+                        <input type="text" name="search" class="form-control" placeholder="{{ t.search_patient }}" value="{{ search }}" autofocus>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i> {{ t.search }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-list"></i> {{ t.full_list }} ({{ patients|length }} {{ t.patient }})
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0">
+                        <thead class="table-dark text-center">
+                            <tr>
+                                <th>#</th>
+                                <th><i class="fas fa-user"></i> {{ t.name }}</th>
+                                <th><i class="fas fa-phone"></i> {{ t.phone }}</th>
+                                <th><i class="fas fa-birthday-cake"></i> {{ t.age }}</th>
+                                <th><i class="fas fa-venus-mars"></i> {{ t.gender }}</th>
+                                <th><i class="fas fa-calendar-alt"></i> {{ t.last_visit }}</th>
+                                <th><i class="fas fa-vial"></i> {{ t.orders_count or t.orders }}</th>
+                                <th><i class="fas fa-cog"></i> {{ t.actions }}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-center align-middle">
+                            {% for p in patients %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td class="fw-bold text-start ps-3">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <a href="/patient_details/{{ p.id }}" class="text-decoration-none">
+                                            {{ p.name }}
+                                        </a>
+                                        {% if p.notes %}
+                                        <button type="button" class="btn btn-sm text-warning p-0 border-0" data-bs-toggle="modal" data-bs-target="#noteModal{{ p.id }}" title="{{ t.notes }}">
+                                            <i class="fas fa-sticky-note"></i>
+                                        </button>
+
+                                        <div class="modal fade" id="noteModal{{ p.id }}" tabindex="-1" aria-labelledby="noteModalLabel" aria-hidden="true">
+                                            <div class="modal-dialog modal-sm modal-dialog-centered">
+                                                <div class="modal-content text-start shadow-lg">
+                                                    <div class="modal-header bg-warning py-2">
+                                                        <h6 class="modal-title fw-bold" id="noteModalLabel"><i class="fas fa-notes-medical"></i> {{ t.notes }}</h6>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body p-3 bg-light">
+                                                        <p class="mb-0 small text-dark" style="white-space: pre-wrap;">{{ p.notes }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>{{ p.phone or '---' }}</td>
+                                <td><span class="badge bg-light text-dark">{{ p.age or '---' }}</span></td>
+                                <td>
+                                    {% if p.gender == 'Male' %}
+                                        <i class="fas fa-mars text-primary"></i> {{ t.male }}
+                                    {% elif p.gender == 'Female' %}
+                                        <i class="fas fa-venus text-danger"></i> {{ t.female }}
+                                    {% else %}
+                                        <span class="text-muted">---</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ p.last_visit.strftime('%Y-%m-%d') if p.last_visit else '---' }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <span class="badge rounded-pill bg-success">
+                                        {{ p.orders|length }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <a href="/patient_details/{{ p.id }}" class="btn btn-sm btn-outline-info" title="{{ t.view }}">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="/edit_patient/{{ p.id }}" class="btn btn-sm btn-outline-primary" title="{{ t.edit }}">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form action="/delete_patient/{{ p.id }}" method="POST" style="display:inline;" onsubmit="return confirm('{{ t.confirm_delete_patient if t.confirm_delete_patient else 'Are you sure?' }}')">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-5">
+                                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                                    <p>{{ t.no_data }}</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

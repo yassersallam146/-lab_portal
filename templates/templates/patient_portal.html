@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ dir }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>{{ t.online_results }}</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .portal-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+        .portal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            border-radius: 20px 20px 0 0;
+            text-align: center;
+        }
+        .portal-body {
+            padding: 40px 30px;
+        }
+        .result-box {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 20px;
+            display: none;
+        }
+        .result-box.success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border: 2px solid #28a745;
+        }
+        .result-box.error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border: 2px solid #dc3545;
+        }
+        .pin-input {
+            font-size: 1.5rem;
+            text-align: center;
+            letter-spacing: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .extra-input {
+            font-size: 1.1rem;
+            text-align: center;
+            font-weight: 500;
+        }
+        .download-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(40, 167, 69, 0.4);
+        }
+        .language-switcher {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+        }
+        .lang-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 0 2px;
+        }
+        .lang-btn.active {
+            background: white;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="language-switcher">
+        <button class="lang-btn {{ 'active' if lang == 'ar' else '' }}" onclick="changeLanguage('ar')">العربية</button>
+        <button class="lang-btn {{ 'active' if lang == 'en' else '' }}" onclick="changeLanguage('en')">English</button>
+    </div>
+    
+    <div class="portal-card">
+        <div class="portal-header">
+            <i class="fas fa-hospital fa-4x mb-3"></i>
+            <h2 class="mb-2">{{ t.patient_portal }}</h2>
+            <p class="mb-0 opacity-75">{{ t.result_inquiry }}</p>
+        </div>
+        
+        <div class="portal-body">
+            <div class="text-center mb-4">
+                <h5>{{ t.enter_your_pin }}</h5>
+                <p class="text-muted">
+                    <i class="fas fa-info-circle"></i> {{ t.pin_help }}
+                </p>
+            </div>
+            
+            <form id="checkForm" onsubmit="checkResult(event)">
+                <div class="mb-3">
+                    <label class="form-label d-block text-center small text-muted">{{ t.enter_pin_label }}</label>
+                    <input 
+                        type="text" 
+                        id="pinInput" 
+                        class="form-control form-control-lg pin-input" 
+                        placeholder="{{ t.pin_placeholder }}"
+                        maxlength="8"
+                        required
+                        autofocus
+                    >
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label d-block text-center small text-muted">{{ t.enter_phone_or_name }}</label>
+                    <input 
+                        type="text" 
+                        id="extraInfoInput" 
+                        class="form-control form-control-lg extra-input" 
+                        placeholder="{{ t.phone_or_name_placeholder }}"
+                        required
+                    >
+                </div>
+                
+                <button type="submit" class="btn btn-primary w-100 btn-lg">
+                    <i class="fas fa-search"></i> {{ t.search_for_result }}
+                </button>
+            </form>
+            
+            <div id="resultBox" class="result-box">
+                <div id="resultContent"></div>
+            </div>
+            
+            <div id="loadingSpinner" class="text-center mt-4" style="display: none;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">{{ t.searching }}</span>
+                </div>
+                <p class="mt-2 text-muted">{{ t.searching }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // JavaScript translations
+        const jsTranslations = {
+            enterPin: "{{ t.enter_pin }}",
+            enterExtra: "{{ t.enter_phone_or_name_error }}",
+            resultNotFound: "{{ t.result_not_found }}",
+            searchError: "{{ t.search_error }}",
+            yourResultReady: "{{ t.your_result_ready }}",
+            patient: "{{ t.patient }}",
+            test: "{{ t.test }}",
+            testDate: "{{ t.test_date }}",
+            downloadResult: "{{ t.download }}",
+            note: "{{ t.note }}",
+            noteText: "{{ t.note_text }}",
+            ensure: "{{ t.ensure }}",
+            ensureList1: "{{ t.ensure_list1 }}",
+            ensureList2: "{{ t.ensure_list2 }}",
+            sorry: "{{ t.sorry }}"
+        };
+        
+        function changeLanguage(lang) {
+            localStorage.setItem('patientPortalLanguage', lang);
+            window.location.href = `/update_portal_language?lang=${lang}&redirect=/online_results`;
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedLang = localStorage.getItem('patientPortalLanguage');
+            if (savedLang && savedLang !== '{{ lang }}') {
+                changeLanguage(savedLang);
+            }
+        });
+        
+        async function checkResult(e) {
+            e.preventDefault();
+            
+            const pin = document.getElementById('pinInput').value.trim().toUpperCase();
+            const extraInfo = document.getElementById('extraInfoInput').value.trim();
+            const resultBox = document.getElementById('resultBox');
+            const resultContent = document.getElementById('resultContent');
+            const spinner = document.getElementById('loadingSpinner');
+            
+            if (!pin) {
+                showError(jsTranslations.enterPin);
+                return;
+            }
+            if (!extraInfo) {
+                showError(jsTranslations.enterExtra);
+                return;
+            }
+            
+            resultBox.style.display = 'none';
+            spinner.style.display = 'block';
+            
+            try {
+                const formData = new FormData();
+                formData.append('pin', pin);
+                formData.append('extra_info', extraInfo); // إرسال البيانات الإضافية للسيرفر
+                
+                const response = await fetch('/check_online', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                spinner.style.display = 'none';
+                
+                if (data.status === 'success') {
+                    showSuccess(data);
+                } else {
+                    showError(data.message || jsTranslations.resultNotFound);
+                }
+            } catch (error) {
+                spinner.style.display = 'none';
+                showError(jsTranslations.searchError);
+                console.error('Error:', error);
+            }
+        }
+        
+        function showSuccess(data) {
+            const resultBox = document.getElementById('resultBox');
+            const resultContent = document.getElementById('resultContent');
+            
+            resultContent.innerHTML = `
+                <div class="text-center">
+                    <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
+                    <h4 class="text-success mb-4">${jsTranslations.yourResultReady}</h4>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <strong><i class="fas fa-user"></i> ${jsTranslations.patient}:</strong><br>
+                        ${data.patient}
+                    </div>
+                    <div class="col-6">
+                        <strong><i class="fas fa-flask"></i> ${jsTranslations.test}:</strong><br>
+                        ${data.test}
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <strong><i class="fas fa-calendar"></i> ${jsTranslations.testDate}:</strong><br>
+                    ${data.date}
+                </div>
+                
+                <div class="text-center">
+                    <a href="${data.file}" target="_blank" class="download-btn">
+                        <i class="fas fa-download"></i> ${jsTranslations.downloadResult}
+                    </a>
+                </div>
+                
+                <div class="alert alert-info mt-4 mb-0">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>${jsTranslations.note}:</strong> ${jsTranslations.noteText}
+                </div>
+            `;
+            
+            resultBox.className = 'result-box success';
+            resultBox.style.display = 'block';
+        }
+        
+        function showError(message) {
+            const resultBox = document.getElementById('resultBox');
+            const resultContent = document.getElementById('resultContent');
+            
+            resultContent.innerHTML = `
+                <div class="text-center">
+                    <i class="fas fa-times-circle text-danger fa-4x mb-3"></i>
+                    <h5 class="text-danger mb-3">${jsTranslations.sorry}!</h5>
+                    <p>${message}</p>
+                    
+                    <div class="alert alert-warning mt-4 mb-0">
+                        <strong>${jsTranslations.ensure}:</strong>
+                        <ul class="text-start mb-0 mt-2">
+                            <li>${jsTranslations.ensureList1}</li>
+                            <li>${jsTranslations.ensureList2}</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            resultBox.className = 'result-box error';
+            resultBox.style.display = 'block';
+        }
+        
+        document.getElementById('pinInput').addEventListener('input', function(e) {
+            this.value = this.value.toUpperCase();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title if title else t.dashboard }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            direction: {{ dir }}; 
+            margin: 20px; 
+        }
+        header { margin-bottom: 20px; }
+        
+        /* تعديل ألوان الروابط يدوياً هنا */
+        nav a { 
+            margin: 0 10px; 
+            text-decoration: none; 
+            color: #ffffff; /* غير هذا الكود لتغيير لون العناوين (حالياً أبيض) */
+            font-weight: bold;
+        }
+        
+        /* لون الروابط عند الوقوف عليها بالماوس */
+        nav a:hover {
+            color: #f1c40f; /* حالياً أصفر */
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+        input, select, button { padding: 5px; margin: 2px; }
+        .autocomplete-suggestions { border: 1px solid #ccc; max-height: 150px; overflow-y: auto; background: #fff; position: absolute; z-index: 9999; }
+        .autocomplete-suggestion { padding: 5px; cursor: pointer; }
+        .autocomplete-suggestion:hover { background: #eee; }
+        
+        /* كود لضمان وضوح الأيقونات */
+        nav a i {
+            margin-left: 5px;
+            color: #3498db; /* لون الأيقونات (سماوي) */
+        }
+    </style>
+</head>
+<body>
+<header style="background-color: #2c3e50; padding: 20px; border-radius: 10px;"> <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; color: white;">
+        <img src="/static/images/logo.png" alt="Logo" style="max-height: 120px; width: auto;">
+        <h1 style="margin: 0;">{{ title if title else t.dashboard }}</h1>
+    </div>
+    
+    <nav>
+        <a href="/"><i class="fas fa-home"></i> {{ t.home }}</a>
+        <a href="/patients"><i class="fas fa-users"></i> {{ t.patients }}</a>
+        <a href="/orders"><i class="fas fa-vials"></i> {{ t.orders }}</a>
+        
+        {% if user.role == 'admin' or show_finance %}
+        <a href="/finance">
+            <i class="fas fa-file-invoice-dollar"></i> {{ t.finance or 'المالية' }}
+        </a>
+        {% endif %}
+        
+        <span style="margin: 0 15px; color: #ccc;">|</span>
+        
+        {% if user.role == 'admin' or settings.show_language_to_users %}
+        <form action="/update_language" method="post" style="display: inline-block;">
+            <select name="lang" onchange="this.form.submit()">
+                <option value="ar" {% if lang == 'ar' %}selected{% endif %}>{{ t.arabic }}</option>
+                <option value="en" {% if lang == 'en' %}selected{% endif %}>{{ t.english }}</option>
+            </select>
+        </form>
+        {% endif %}
+        
+        <a href="/my_settings" style="color: #2ecc71 !important; font-weight: bold;">
+            <i class="fas fa-user-cog"></i> {{ t.profile }}
+        </a>
+        
+        <a href="/logout" style="color: #e74c3c !important;">
+            <i class="fas fa-sign-out-alt"></i> {{ t.logout }}
+        </a>
+    </nav>
+    <hr>
+</header>
+
+<div>
+    {% block content %}
+    {% endblock %}
+</div>
+
+</body>
+</html>

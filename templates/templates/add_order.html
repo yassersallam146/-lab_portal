@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ dir }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>{{ t.add_order }}</title>
+    <style>
+        /* ستايل لضمان وضوح نصوص العناوين والنتائج */
+        .form-label { color: #000000 !important; } 
+        .s-box {
+            position: absolute; width: 100%; z-index: 1000;
+            background: white; border: 2px solid #667eea; border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2); display: none;
+            max-height: 300px; overflow-y: auto;
+        }
+        .s-item { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #eee; color: #000; }
+        .s-item:hover { background: #f0f4ff; }
+        .form-card { max-width: 850px; margin: 30px auto; }
+        .section-title { 
+            font-size: 0.9rem; color: #4b6cb7; font-weight: bold;
+            text-transform: uppercase; letter-spacing: 1px;
+            border-bottom: 2px solid #e0e0e0; padding-bottom: 5px; margin-bottom: 20px;
+        }
+        /* توضيح ألوان الأزرار */
+        .btn-save-order { background-color: #198754 !important; color: #ffffff !important; border: none; }
+        .btn-cancel-order { color: #000000 !important; border: 1px solid #6c757d !important; }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container py-4">
+        <div class="card shadow form-card border-0">
+            <div class="card-header text-white text-center py-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h3 class="mb-0 fw-bold"><i class="fas fa-file-medical"></i> {{ t.new_order_registration }}</h3>
+            </div>
+            <div class="card-body p-4 p-md-5">
+                <form method="post" action="/add_order" id="orderForm">
+                    
+                    <div class="section-title"><i class="fas fa-user-circle"></i> {{ t.patient_info }}</div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6 position-relative">
+                            <label class="form-label fw-bold small"><i class="fas fa-search"></i> {{ t.patient_name_or_phone }}</label>
+                            <input type="text" name="name" id="p_search" class="form-control form-control-lg border-dark" 
+                                   placeholder="{{ t.search_placeholder or 'Search...' }}" oninput="doSearch(this.value)" autocomplete="off" required>
+                            <div id="results" class="s-box"></div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small"><i class="fas fa-phone"></i> {{ t.phone }}</label>
+                            <input type="text" name="phone" id="p_phone" class="form-control form-control-lg border-dark" required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small"><i class="fas fa-birthday-cake"></i> {{ t.age }}</label>
+                            <input type="number" name="age" id="p_age" class="form-control border-dark" placeholder="{{ t.optional }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small"><i class="fas fa-venus-mars"></i> {{ t.gender }}</label>
+                            <select name="gender" id="p_gender" class="form-select border-dark">
+                                <option value="">-- {{ t.select_gender }} --</option>
+                                <option value="Male">{{ t.male }}</option>
+                                <option value="Female">{{ t.female }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small"><i class="fas fa-map-marker-alt"></i> {{ t.address }}</label>
+                            <input type="text" name="address" id="p_address" class="form-control border-dark" placeholder="{{ t.optional }}">
+                        </div>
+                    </div>
+
+                    <div class="section-title"><i class="fas fa-microscope"></i> {{ t.test_details }}</div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold small"><i class="fas fa-flask"></i> {{ t.test_name }}</label>
+                            <input type="text" name="test" class="form-control border-dark" list="common-tests" placeholder="{{ t.test_placeholder or 'Test type' }}" required>
+                            <datalist id="common-tests">
+                                <option value="CBC">
+                                <option value="HbA1c">
+                                <option value="Liver Function">
+                            </datalist>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small"><i class="fas fa-dollar-sign"></i> {{ t.price }} ({{ t.currency }})</label>
+                            <input type="number" name="price" class="form-control border-dark" required>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="currency" value="{{ t.currency }}">
+
+                    <div class="col-12 text-center mt-4">
+                        <button type="submit" class="btn btn-save-order btn-lg px-5 shadow-sm fw-bold">
+                            <i class="fas fa-save"></i> {{ t.save_order }}
+                        </button>
+                        <a href="/orders" class="btn btn-cancel-order btn-lg px-4 ms-2 fw-bold text-decoration-none">
+                            {{ t.cancel }}
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let searchTimeout;
+        async function doSearch(q) {
+            const box = document.getElementById('results');
+            clearTimeout(searchTimeout);
+            if(q.length < 2) { box.style.display = 'none'; return; }
+            
+            searchTimeout = setTimeout(async () => {
+                const res = await fetch(`/search_patients?query=${encodeURIComponent(q)}`);
+                const data = await res.json();
+                if(data.length > 0) {
+                    box.innerHTML = data.map(p => `
+                        <div class="s-item" onclick="pick('${p.name.replace(/'/g, "\\'")}', '${p.phone}', '${p.age || ''}', '${p.gender || ''}', '${p.address || ''}')">
+                            <strong style="color:#000">${p.name}</strong> 
+                            <span class="badge bg-primary float-end">${p.age || ''} {{ t.years }}</span><br>
+                            <small class="text-muted">${p.phone}</small>
+                        </div>`).join('');
+                    box.style.display = 'block';
+                } else {
+                    box.innerHTML = `<div class="s-item text-danger fw-bold">{{ t.new_patient_msg }}</div>`;
+                    box.style.display = 'block';
+                }
+            }, 300);
+        }
+
+        function pick(name, phone, age, gender, address) {
+            document.getElementById('p_search').value = name;
+            document.getElementById('p_phone').value = phone;
+            document.getElementById('p_age').value = age;
+            document.getElementById('p_gender').value = gender; 
+            document.getElementById('p_address').value = address;
+            document.getElementById('results').style.display = 'none';
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#p_search')) document.getElementById('results').style.display = 'none';
+        });
+    </script>
+</body>
+</html>

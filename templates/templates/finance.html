@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ dir }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>{{ t.finance }}</title>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+        }
+        .total-box {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="text-center mb-4">
+            <h2><i class="fas fa-chart-line text-success"></i> {{ t.finance }}</h2>
+            <p class="text-muted">{{ t.revenue_review }}</p>
+        </div>
+        
+        <!-- Filter Card -->
+        <div class="card mb-4 no-print shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-filter"></i> {{ t.filter_by_date }}
+            </div>
+            <div class="card-body">
+                <form method="get" action="/finance" class="row g-3">
+                    <div class="col-md-5">
+                        <label class="form-label fw-bold">{{ t.from_date }}:</label>
+                        <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label fw-bold">{{ t.to_date }}:</label>
+                        <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i> {{ t.filter }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Summary Box -->
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3">
+                <div class="total-box shadow">
+                    <i class="fas fa-coins fa-3x mb-3"></i>
+                    <h2 class="mb-0">{{ total }} {{ t.currency }}</h2>
+                    <p class="mb-0">{{ t.total_revenue }}</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card shadow text-center">
+                    <div class="card-body">
+                        <i class="fas fa-file-invoice-dollar text-info fa-3x mb-3"></i>
+                        <h3>{{ orders|length }}</h3>
+                        <p class="text-muted mb-0">{{ t.invoice_count }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card shadow text-center">
+                    <div class="card-body">
+                        <i class="fas fa-chart-bar text-warning fa-3x mb-3"></i>
+                        <h3>{{ (total / orders|length)|round(2) if orders|length > 0 else 0 }} {{ t.currency }}</h3>
+                        <p class="text-muted mb-0">{{ t.average_invoice }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Transactions Table -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+                <i class="fas fa-table"></i> {{ t.transaction_details }}
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0">
+                        <thead class="table-secondary">
+                            <tr class="text-center">
+                                <th width="5%">#</th>
+                                <th><i class="fas fa-calendar"></i> {{ t.date }}</th>
+                                <th><i class="fas fa-user"></i> {{ t.patient }}</th>
+                                <th><i class="fas fa-flask"></i> {{ t.test }}</th>
+                                <th><i class="fas fa-dollar-sign"></i> {{ t.amount }}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-center">
+                            {% for o in orders %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        {{ o.created_at.strftime('%Y-%m-%d') }}
+                                    </span>
+                                    <br>
+                                    <small class="text-muted">{{ o.created_at.strftime('%H:%M') }}</small>
+                                </td>
+                                <td class="fw-bold">{{ o.patient_name }}</td>
+                                <td>{{ o.test_name }}</td>
+                                <td>
+                                    <span class="text-success fw-bold fs-5">{{ o.price }} {{ o.currency }}</span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-5">
+                                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                                    <p>{{ t.no_transactions }}</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        {% if orders|length > 0 %}
+                        <tfoot class="table-success">
+                            <tr class="fw-bold fs-5">
+                                <td colspan="4" class="text-end">{{ t.total }}:</td>
+                                <td class="text-center">{{ total }} {{ t.currency }}</td>
+                            </tr>
+                        </tfoot>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="text-center mt-4 no-print">
+            <button onclick="window.print()" class="btn btn-dark btn-lg me-2">
+                <i class="fas fa-print"></i> {{ t.print_report }}
+            </button>
+            <a href="/" class="btn btn-secondary btn-lg">
+                <i class="fas fa-home"></i> {{ t.home }}
+            </a>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

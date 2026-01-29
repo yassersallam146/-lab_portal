@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ dir }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>{{ t.edit_patient }}</title>
+    <style>
+        body { background-color: #f4f7f6; }
+        .card { border-radius: 15px; border: none; }
+        .card-header { border-radius: 15px 15px 0 0 !important; }
+        .form-label { font-size: 0.9rem; margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-7 col-lg-6">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h4 class="mb-0 text-center"><i class="fas fa-user-edit"></i> {{ t.edit_patient }}</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <form action="/edit_patient/{{ patient.id }}" method="post">
+                            
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label fw-bold text-primary"><i class="fas fa-user"></i> {{ t.patient_name }}</label>
+                                    <input type="text" name="name" class="form-control" value="{{ patient.name }}" required>
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label fw-bold text-primary"><i class="fas fa-phone"></i> {{ t.phone }}</label>
+                                    <input type="text" name="phone" class="form-control" value="{{ patient.phone }}">
+                                </div>
+                            </div>
+
+                            <hr class="my-3">
+
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <label class="form-label fw-bold"><i class="fas fa-birthday-cake"></i> {{ t.age if t.age else 'السن' }}</label>
+                                    <input type="number" name="age" class="form-control" value="{{ patient.age }}">
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <label class="form-label fw-bold"><i class="fas fa-venus-mars"></i> {{ t.gender if t.gender else 'النوع' }}</label>
+                                    <select name="gender" class="form-select">
+                                        <option value="">-- {{ t.select_gender if t.select_gender else 'اختر' }} --</option>
+                                        <option value="Male" {% if patient.gender == 'Male' %}selected{% endif %}>{{ t.male if t.male else 'ذكر' }}</option>
+                                        <option value="Female" {% if patient.gender == 'Female' %}selected{% endif %}>{{ t.female if t.female else 'أنثى' }}</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold"><i class="fas fa-map-marker-alt"></i> {{ t.address if t.address else 'العنوان' }}</label>
+                                <input type="text" name="address" class="form-control" value="{{ patient.address }}">
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-danger"><i class="fas fa-sticky-note"></i> {{ t.notes if t.notes else 'ملاحظات طبية / إضافية' }}</label>
+                                <textarea name="notes" class="form-control" rows="3">{{ patient.notes if patient.notes else '' }}</textarea>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                                <button type="submit" class="btn btn-success btn-lg px-4 flex-grow-1">
+                                    <i class="fas fa-save"></i> {{ t.save_changes }}
+                                </button>
+                                <a href="/patients" class="btn btn-outline-secondary btn-lg px-4">
+                                    <i class="fas fa-times"></i> {{ t.cancel }}
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
