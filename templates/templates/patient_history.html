@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ dir }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>{{ t.patient_history }} - {{ patient.name }}</title>
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="card shadow mb-4 border-0">
+            <div class="card-header text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h4 class="mb-0">
+                            <i class="fas fa-user-injured text-warning me-2"></i> {{ patient.name }}
+                        </h4>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <span class="badge bg-white text-dark shadow-sm px-3 py-2">ID: #{{ patient.id }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body bg-white">
+                <div class="row g-3 mb-4 text-center">
+                    <div class="col-md-3">
+                        <div class="p-3 border rounded bg-light h-100">
+                            <small class="text-muted d-block mb-1"><i class="fas fa-phone text-primary"></i> {{ t.phone }}</small>
+                            <h6 class="mb-0 fw-bold">{{ patient.phone or '---' }}</h6>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 border rounded bg-light h-100">
+                            <small class="text-muted d-block mb-1"><i class="fas fa-birthday-cake text-danger"></i> {{ t.age }}</small>
+                            <h6 class="mb-0 fw-bold">{{ patient.age or '---' }} {{ t.years if patient.age else '' }}</h6>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 border rounded bg-light h-100">
+                            <small class="text-muted d-block mb-1"><i class="fas fa-venus-mars text-info"></i> {{ t.gender }}</small>
+                            <h6 class="mb-0 fw-bold">
+                                {% if patient.gender == 'Male' %} {{ t.male }} {% elif patient.gender == 'Female' %} {{ t.female }} {% else %} --- {% endif %}
+                            </h6>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 border rounded bg-light h-100 text-truncate">
+                            <small class="text-muted d-block mb-1"><i class="fas fa-map-marker-alt text-success"></i> {{ t.address }}</small>
+                            <h6 class="mb-0 small fw-bold">{{ patient.address or '---' }}</h6>
+                        </div>
+                    </div>
+                </div>
+
+                {% if patient.notes %}
+                <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-4" role="alert">
+                    <i class="fas fa-sticky-note fa-lg me-3 text-warning"></i>
+                    <div>
+                        <strong class="d-block">{{ t.medical_notes or t.notes }}:</strong>
+                        <span class="small">{{ patient.notes }}</span>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <hr class="text-muted">
+                         
+                <div class="row text-center mt-3">
+                    <div class="col-6 col-md-3 border-end">
+                        <i class="fas fa-calendar-alt text-primary mb-2"></i>
+                        <h6 class="small text-muted mb-0">{{ t.last_visit }}</h6>
+                        <small class="fw-bold">{{ patient.last_visit.strftime('%Y-%m-%d') if patient.last_visit else '---' }}</small>
+                    </div>
+                    <div class="col-6 col-md-3 border-end">
+                        <i class="fas fa-vials text-success mb-2"></i>
+                        <h6 class="small text-muted mb-0">{{ t.total_orders }}</h6>
+                        <small class="fw-bold">{{ patient.orders|length }}</small>
+                    </div>
+                    <div class="col-6 col-md-3 border-end">
+                        <i class="fas fa-check-circle text-info mb-2"></i>
+                        <h6 class="small text-muted mb-0">{{ t.ready_results or t.ready }}</h6>
+                        <small class="fw-bold">{{ patient.orders|selectattr('published', 'equalto', True)|list|length }}</small>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <i class="fas fa-hourglass-half text-warning mb-2"></i>
+                        <h6 class="small text-muted mb-0">{{ t.pending }}</h6>
+                        <small class="fw-bold">{{ patient.orders|selectattr('published', 'equalto', False)|list|length }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow border-0">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-history me-2"></i> {{ t.visit_and_test_history }}</span>
+                <span class="badge bg-secondary">{{ patient.orders|length }} {{ t.visit or t.visits }}</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0">
+                        <thead class="table-secondary text-center small">
+                            <tr>
+                                <th><i class="fas fa-calendar"></i> {{ t.date }}</th>
+                                <th><i class="fas fa-flask"></i> {{ t.test_name or t.test }}</th>
+                                <th><i class="fas fa-dollar-sign"></i> {{ t.price }}</th>
+                                <th><i class="fas fa-key"></i> {{ t.pin }}</th>
+                                <th><i class="fas fa-file-alt"></i> {{ t.status }}</th>
+                                <th><i class="fas fa-download"></i> {{ t.result }}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-center align-middle">
+                            {% for o in patient.orders %}
+                            <tr>
+                                <td><span class="badge bg-light text-dark border">{{ o.created_at.strftime('%Y-%m-%d') }}</span></td>
+                                <td class="fw-bold text-primary">{{ o.test_name }}</td>
+                                <td><span class="text-success fw-bold">{{ o.price }} {{ o.currency }}</span></td>
+                                <td><code class="bg-light p-1 px-2 rounded">{{ o.pin }}</code></td>
+                                <td>
+                                    {% if o.published %}
+                                        <span class="badge bg-success"><i class="fas fa-check"></i> {{ t.ready }}</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark"><i class="fas fa-clock"></i> {{ t.in_process }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if o.published %}
+                                        <a href="/{{ o.result_file }}" class="btn btn-sm btn-success shadow-sm" target="_blank">
+                                            <i class="fas fa-download"></i> {{ t.download }}
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-sm btn-secondary opacity-50" disabled><i class="fas fa-ban"></i></button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-5">
+                                    <i class="fas fa-inbox fa-3x mb-2 text-light"></i>
+                                    <p>{{ t.no_visits_registered or t.no_data }}</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer text-center bg-white py-3">
+                <a href="/patients" class="btn btn-outline-secondary px-4 me-2">
+                    <i class="fas {{ 'fa-arrow-left' if dir == 'ltr' else 'fa-arrow-right' }}"></i> {{ t.back_to_patients }}
+                </a>
+                <a href="/" class="btn btn-outline-primary px-4">
+                    <i class="fas fa-home"></i> {{ t.home }}
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
