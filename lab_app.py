@@ -41,16 +41,34 @@ def manifest():
     return {
         "name": "Lab Management System",
         "short_name": "Lab Portal",
-        "description": "Laboratory Management System",
         "start_url": "/",
         "display": "standalone",
         "background_color": "#ffffff",
         "theme_color": "#3498db",
         "icons": [
-            {"src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png"},
-            {"src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png"}
+            {
+                "src": "/icon-192.png",
+                "sizes": "192x192",
+                "type": "image/png",
+                "purpose": "any"
+            },
+            {
+                "src": "/icon-512.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any"
+            }
         ]
     }
+
+# لازم تضيف دول عشان السيرفر يرضى يبعت الصور للمتصفح
+@app.get('/icon-192.png')
+def icon192():
+    return FileResponse('icon-192.png')
+
+@app.get('/icon-512.png')
+def icon512():
+    return FileResponse('icon-512.png')
 
 @app.get('/sw.js')
 def service_worker():
