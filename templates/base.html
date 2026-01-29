@@ -3,14 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <title>{{ title if title else t.dashboard }}</title>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2c3e50">
+    <link rel="manifest" href="/manifest.json">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Lab Portal">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
     <style>
         body { 
             font-family: Arial, sans-serif; 
             direction: {{ dir }}; 
             margin: 20px; 
+            /* عشان في الموبايل المحتوى ما يلزقش في الحواف */
+            padding-bottom: 50px; 
         }
         header { margin-bottom: 20px; }
         
@@ -18,13 +31,13 @@
         nav a { 
             margin: 0 10px; 
             text-decoration: none; 
-            color: #ffffff; /* غير هذا الكود لتغيير لون العناوين (حالياً أبيض) */
+            color: #ffffff; 
             font-weight: bold;
         }
         
         /* لون الروابط عند الوقوف عليها بالماوس */
         nav a:hover {
-            color: #f1c40f; /* حالياً أصفر */
+            color: #f1c40f; 
         }
 
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
@@ -37,12 +50,20 @@
         /* كود لضمان وضوح الأيقونات */
         nav a i {
             margin-left: 5px;
-            color: #3498db; /* لون الأيقونات (سماوي) */
+            color: #3498db; 
+        }
+        
+        /* تحسين للقوائم في الموبايل */
+        @media (max-width: 768px) {
+            header div { flex-direction: column; text-align: center; }
+            nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+            nav a { margin: 5px; font-size: 14px; }
         }
     </style>
 </head>
 <body>
-<header style="background-color: #2c3e50; padding: 20px; border-radius: 10px;"> <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; color: white;">
+<header style="background-color: #2c3e50; padding: 20px; border-radius: 10px;"> 
+    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; color: white;">
         <img src="/static/images/logo.png" alt="Logo" style="max-height: 120px; width: auto;">
         <h1 style="margin: 0;">{{ title if title else t.dashboard }}</h1>
     </div>
@@ -84,6 +105,18 @@
     {% block content %}
     {% endblock %}
 </div>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                console.log('SW registered in Base');
+            }, function(err) {
+                console.log('SW failed: ', err);
+            });
+        });
+    }
+</script>
 
 </body>
 </html>
