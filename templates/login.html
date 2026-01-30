@@ -57,9 +57,43 @@
         .alert {
             border-radius: 10px;
         }
+
+        /* تنسيق بنر التثبيت */
+        #pwa-install-banner {
+            display: none;
+            background: rgba(255, 255, 255, 0.95);
+            color: #2c3e50;
+            padding: 15px;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            border: 2px solid #667eea;
+        }
+        #pwa-install-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-top: 10px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
+    <div id="pwa-install-banner">
+        <div class="fw-bold mb-1">🚀 {{ t.install_app_msg or 'ثبت التطبيق الآن' }}</div>
+        <button id="pwa-install-btn">{{ t.install or 'تثبيت' }}</button>
+    </div>
+
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-5 col-lg-4">
@@ -107,6 +141,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        // تسجيل السيرفس وركر كما هو في كودك
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
                 navigator.serviceWorker.register('/sw.js').then(function(registration) {
@@ -116,6 +151,33 @@
                 });
             });
         }
+
+        // منطق التثبيت الاحترافي
+        let deferredPrompt;
+        const installBanner = document.getElementById('pwa-install-banner');
+        const installBtn = document.getElementById('pwa-install-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // إظهار البنر بمجرد تأكد المتصفح أن الموقع جاهز للتثبيت
+            installBanner.style.display = 'block';
+
+            installBtn.addEventListener('click', () => {
+                installBanner.style.display = 'none';
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted install');
+                    }
+                    deferredPrompt = null;
+                });
+            });
+        });
+
+        window.addEventListener('appinstalled', () => {
+            installBanner.style.display = 'none';
+        });
     </script>
 </body>
 </html>
