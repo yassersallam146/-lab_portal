@@ -40,6 +40,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get('/manifest.json')
 def manifest():
+    # كلمة JSONResponse(content=...) هي اللي بتخلي المتصفح يلقط الملف
     return JSONResponse(content={
         "name": "Lab Management System",
         "short_name": "Lab Portal",
