@@ -38,7 +38,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get('/manifest.json')
 def manifest():
-    return {
+    return JSONResponse({
         "name": "Lab Management System",
         "short_name": "Lab Portal",
         "start_url": "/",
@@ -59,7 +59,7 @@ def manifest():
                 "purpose": "any"
             }
         ]
-    }
+    })
 
 # لازم تضيف دول عشان السيرفر يرضى يبعت الصور للمتصفح
 @app.get('/icon-192.png')
