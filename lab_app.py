@@ -40,8 +40,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get('/manifest.json')
 def manifest():
-    # نلف البيانات بـ JSONResponse عشان المتصفح "يحس" بيها
-    return JSONResponse(content={
+    return JSONResponse({
         "name": "Lab Management System",
         "short_name": "Lab Portal",
         "start_url": "/",
@@ -49,17 +48,23 @@ def manifest():
         "background_color": "#ffffff",
         "theme_color": "#3498db",
         "icons": [
+            {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"},
+            {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png"}
+        ],
+        "screenshots": [
             {
-                "src": "/icon-192.png",
-                "sizes": "192x192",
+                "src": "/static/screenshot-mobile.png",
+                "sizes": "1080x1920",
                 "type": "image/png",
-                "purpose": "any"
+                "form_factor": "narrow",
+                "label": "Lab Portal Mobile View"
             },
             {
-                "src": "/icon-512.png",
-                "sizes": "512x512",
+                "src": "/static/screenshot-desktop.png",
+                "sizes": "1920x1080",
                 "type": "image/png",
-                "purpose": "any"
+                "form_factor": "wide",
+                "label": "Lab Portal Desktop View"
             }
         ]
     })
