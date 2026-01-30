@@ -40,7 +40,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get('/manifest.json')
 def manifest():
-    return JSONResponse({
+    return JSONResponse(content={
         "name": "Lab Management System",
         "short_name": "Lab Portal",
         "start_url": "/",
