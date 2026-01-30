@@ -54,14 +54,14 @@ def manifest():
         "screenshots": [
             {
                 "src": "/static/screenshot-mobile.png",
-                "sizes": "1080x1920",
+                "sizes": "1320x2321",
                 "type": "image/png",
                 "form_factor": "narrow",
                 "label": "Lab Portal Mobile View"
             },
             {
                 "src": "/static/screenshot-desktop.png",
-                "sizes": "1920x1080",
+                "sizes": "1888x861",
                 "type": "image/png",
                 "form_factor": "wide",
                 "label": "Lab Portal Desktop View"
