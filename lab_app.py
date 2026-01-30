@@ -1,20 +1,22 @@
 import os
 import random
 import shutil
+import logging
 from datetime import datetime, date, timedelta
 from typing import Optional
-from fastapi import FastAPI, Request, Form, Depends, File, UploadFile, HTTPException, Header
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, Response
-from fastapi.responses import FileResponse
+
+from fastapi import FastAPI, Request, Form, Depends, File, UploadFile, HTTPException, Header, Response
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, FileResponse # مجمعين هنا
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, ForeignKey, func, or_, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
+
 from starlette.middleware.sessions import SessionMiddleware
 from passlib.context import CryptContext
 from pydantic import BaseModel, validator
-import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 
 # Setup logging
@@ -38,7 +40,8 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get('/manifest.json')
 def manifest():
-    return JSONResponse({
+    # نلف البيانات بـ JSONResponse عشان المتصفح "يحس" بيها
+    return JSONResponse(content={
         "name": "Lab Management System",
         "short_name": "Lab Portal",
         "start_url": "/",
