@@ -64,11 +64,11 @@ def manifest():
 # لازم تضيف دول عشان السيرفر يرضى يبعت الصور للمتصفح
 @app.get('/icon-192.png')
 def icon192():
-    return FileResponse('icon-192.png')
+    return FileResponse('static/icon-192.png')
 
 @app.get('/icon-512.png')
 def icon512():
-    return FileResponse('icon-512.png')
+    return FileResponse('static/icon-512.png')
 
 @app.get('/sw.js')
 def service_worker():
